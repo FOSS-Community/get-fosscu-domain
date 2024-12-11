@@ -1,31 +1,43 @@
 import { useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
-const GithubCallback = () => {
-  const { setUser } = useAuth();
+export default function GithubCallback() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { handleCallback, isLoading } = useAuth();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-
+    const code = searchParams.get('code');
     if (code) {
-      // Exchange the code for a token
-      fetch('http://localhost:8000/auth/github/callback', {
-        method: 'POST',
-        body: JSON.stringify({ code }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then(response => response.json())
-        .then(data => {
-          setUser(data.user); // Set user data in context
+      handleCallback(code)
+        .then(() => {
+          // Redirect to home page after successful login
+          navigate('/');
         })
-        .catch(error => console.error('Error:', error));
+        .catch((error) => {
+          console.error('Error during callback:', error);
+          // Redirect to home page on error
+          navigate('/');
+        });
+    } else {
+      // No code found, redirect to home
+      navigate('/');
     }
-  }, []);
+  }, [searchParams, handleCallback, navigate]);
 
-  return <div>Loading...</div>;
-};
-
-export default GithubCallback; 
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      {isLoading ? (
+        <div className="text-center">
+          <h2 className="text-xl font-bold mb-4">Logging you in...</h2>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+      ) : (
+        <div className="text-center">
+          <h2 className="text-xl font-bold">Redirecting...</h2>
+        </div>
+      )}
+    </div>
+  );
+} 

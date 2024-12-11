@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import Domain from '@/components/Domain';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
-  const [showDomain, setShowDomain] = useState(false);
+  const [_, setShowDomain] = useState(false);
+  const { login, isLoading, user } = useAuth();
 
-  if (showDomain) {
+  // If user is logged in, show domain management
+  if (user) {
     return <Domain setShowDomain={setShowDomain} />;
   }
 
@@ -26,10 +29,18 @@ export default function Home() {
         
         <div className="text-center mt-16">
           <button 
-            onClick={() => setShowDomain(true)}
-            className="no-underline bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-xl"
+            onClick={() => login()}
+            disabled={isLoading}
+            className={`no-underline bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg text-xl flex items-center justify-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Get your domain
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                Connecting to GitHub...
+              </>
+            ) : (
+              'Get your domain'
+            )}
           </button>
         </div>
       </div>
