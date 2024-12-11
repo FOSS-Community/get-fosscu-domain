@@ -1,0 +1,42 @@
+.word {
+    font-weight: bold;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+td {
+    padding: 0.5em;
+}
+
+code {
+    background-color: #f3f4f6;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+}
+
+pre {
+    /* don't show scrollbar unless needed */
+    overflow: auto;
+    padding: .75em;
+    margin: .5em 0;
+    background-color: #efe;
+    font-size: .8em;
+}
+
+summary {
+    cursor: pointer;
+}
+
+li {
+    margin: .5em 0;
+    /* numbers */
+}
+
+ol li {
+    list-style-type: decimal;
+}
+
+ol,
+ul {
+    margin-left: 1em;
+}
