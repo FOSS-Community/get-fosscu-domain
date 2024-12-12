@@ -1,43 +1,38 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
-export default function GithubCallback() {
+const GitHubCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { handleCallback, isLoading } = useAuth();
+  const { handleCallback } = useAuth();
+  console.log('entered callback component')
 
   useEffect(() => {
-    const code = searchParams.get('code');
+    const code = searchParams.get('token');
+    console.log('Received code:', code); // For debugging
+
     if (code) {
       handleCallback(code)
         .then(() => {
-          // Redirect to home page after successful login
-          navigate('/');
+          console.log('Authentication successful');
+          navigate('/'); // Redirect to home page after successful login
         })
         .catch((error) => {
-          console.error('Error during callback:', error);
-          // Redirect to home page on error
-          navigate('/');
+          console.error('Authentication failed:', error);
+          navigate('/login'); // Redirect to login page on failure
         });
-    } else {
-      // No code found, redirect to home
-      navigate('/');
     }
   }, [searchParams, handleCallback, navigate]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
-      {isLoading ? (
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-4">Logging you in...</h2>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-        </div>
-      ) : (
-        <div className="text-center">
-          <h2 className="text-xl font-bold">Redirecting...</h2>
-        </div>
-      )}
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-2">Authenticating...</h2>
+        <p>Please wait while we complete your login.</p>
+      </div>
     </div>
   );
-} 
+};
+
+export default GitHubCallback;
