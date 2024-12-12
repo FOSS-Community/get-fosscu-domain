@@ -9,7 +9,7 @@ interface AuthContextType {
   login: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
-  handleCallback: (code: string) => Promise<void>;
+  handleCallback: (token: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,30 +32,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const handleCallback = async (code: string) => {
+  const handleCallback = async (token: string) => {
     try {
       setIsLoading(true);
-      const { data } = await axios.get(`${BASE_URL}/api/v1/auth/github/callback`, {
-        params: { code }
+      localStorage.setItem('token', token);
+      
+      const { data: userData } = await axios.get(`${BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
-      if (data.access_token) {
-        localStorage.setItem('token', data.access_token);
-        
-        const { data: userData } = await axios.get(`${BASE_URL}/api/v1/auth/me`, {
-          headers: {
-            'Authorization': `Bearer ${data.access_token}`
-          }
-        });
-        
-        setUser({
-          ...userData,
-          token: data.access_token,
-          tokenType: data.token_type
-        });
-      }
+      setUser(userData);
     } catch (error) {
       console.error('Callback error:', error);
+      localStorage.removeItem('token');
     } finally {
       setIsLoading(false);
     }

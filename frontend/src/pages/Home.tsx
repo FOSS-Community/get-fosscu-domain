@@ -1,14 +1,11 @@
-import { useState } from 'react';
 import Domain from '@/components/Domain';
 import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
-  const [_, setShowDomain] = useState(false);
   const { login, isLoading, user } = useAuth();
 
-  // If user is logged in, show domain management
   if (user) {
-    return <Domain setShowDomain={setShowDomain} />;
+    return <Domain />;
   }
 
   return (
