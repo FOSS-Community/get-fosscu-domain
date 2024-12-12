@@ -652,9 +652,9 @@ function Experiments({ domain }: ExperimentProps) {
             </div>
         </div>
     )
-}
+}   
 
-export default function Domain( { setShowDomain }: { setShowDomain: (showDomain: boolean) => void } ) {
+const Domain = () => {
     const [domain] = useState('example346');
     const [records, setRecords] = useState<DNSRecord[]>([
         {
@@ -694,7 +694,7 @@ export default function Domain( { setShowDomain }: { setShowDomain: (showDomain:
                     <h2 className="text-xl">
                         Your subdomain is: <span className="text-emerald-600 font-bold">{domain}.fosscu.org</span>
                     </h2>
-                    <button onClick={() => setShowDomain(false)} className="text-gray-600 hover:text-gray-800 underline">Logout</button>
+                    <button className="text-gray-600 hover:text-gray-800 underline">Logout</button>
                 </div>
 
                 <section className="mb-8">
@@ -834,3 +834,5 @@ export default function Domain( { setShowDomain }: { setShowDomain: (showDomain:
         </div>
     )
 }
+
+export default Domain;

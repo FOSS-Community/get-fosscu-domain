@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'
 
@@ -13,17 +13,14 @@ const GitHubCallback = () => {
     if (code) {
       handleCallback(code)
         .then(() => {
-          // Redirect to home page or dashboard after successful login
           navigate('/');
         })
         .catch((error) => {
           console.error('Authentication failed:', error);
-          // Redirect to login page or error page on failure
-          navigate('/login');
+          navigate('/');
         });
     } else {
-      // No code present, redirect to login
-      navigate('/login');
+      navigate('/');
     }
   }, [searchParams, handleCallback, navigate]);
 
