@@ -7,8 +7,7 @@ from get_fosscu_domain.config import get_settings
 from get_fosscu_domain.models.subdomain import Subdomain
 from get_fosscu_domain.models.user import User
 from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.subdomain.schema import (SubdomainCreate,
-                                                SubdomainResponse)
+from get_fosscu_domain.subdomain.schema import SubdomainCreate, SubdomainResponse
 from get_fosscu_domain.utils.netlify import Netlify
 from get_fosscu_domain.utils.profanity_filter import is_profanity_found
 from sqlalchemy import func
