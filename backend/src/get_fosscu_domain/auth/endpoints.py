@@ -1,16 +1,13 @@
-from fastapi import APIRouter, status, Depends, HTTPException
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-import httpx
+from get_fosscu_domain.auth.auth import create_access_token, get_current_user
+from get_fosscu_domain.auth.schema import GithubLoginResponse, UserResponse
 from get_fosscu_domain.config import get_settings
 from get_fosscu_domain.models.user import User
 from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.auth.auth import create_access_token, get_current_user
-from get_fosscu_domain.auth.schema import (
-    UserResponse,
-    GithubLoginResponse,
-)
+from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["auth"])
 

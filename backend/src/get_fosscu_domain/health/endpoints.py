@@ -1,9 +1,10 @@
-from fastapi import APIRouter, status, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.health.schema import HealthResponse, HealthErrorResponse
 import time
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from get_fosscu_domain.health.schema import HealthErrorResponse, HealthResponse
+from get_fosscu_domain.postgres import get_db
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["health"])
 

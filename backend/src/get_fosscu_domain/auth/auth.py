@@ -1,13 +1,14 @@
 # auth.py
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from datetime import datetime, timedelta, timezone
-from sqlalchemy.orm import Session
-from typing import Optional
+from get_fosscu_domain.config import get_settings
 from get_fosscu_domain.models.user import User
 from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.config import get_settings
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
 # Configuration
 SECRET_KEY = get_settings().SECRET_KEY

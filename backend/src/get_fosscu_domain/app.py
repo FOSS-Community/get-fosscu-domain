@@ -1,13 +1,12 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 import logging
 from logging.config import dictConfig
 
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from get_fosscu_domain.api import router
 from get_fosscu_domain.logging import LogConfig
 from get_fosscu_domain.postgres import Base, engine
-
-from get_fosscu_domain.api import router
 
 dictConfig(LogConfig())
 logger = logging.getLogger("get_fosscu_domain")

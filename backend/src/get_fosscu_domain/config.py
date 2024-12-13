@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Config(BaseSettings):
@@ -10,20 +11,8 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     GITHUB_CLIENT_ID: str
     GITHUB_CLIENT_SECRET: str
-    # MAIL_USERNAME: str
-    # MAIL_PASSWORD: str
-    # MAIL_FROM: str
-    # MAIL_PORT: int
-    # MAIL_SERVER: str
-    # MAIL_FROM_NAME: str
-    # MAIL_STARTTLS: bool = True
-    # MAIL_SSL_TLS: bool = False
-    # USE_CREDENTIALS: bool = True
-    # VALIDATE_CERTS: bool = True
-    # COMPANY_NAME: str
-    # kty: str
-    # n: str
-    # e: str
+    NETLIFY_DOMAIN_ZONE_ID: str
+    NETLIFY_DOMAIN: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

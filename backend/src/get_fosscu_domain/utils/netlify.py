@@ -1,5 +1,6 @@
+from typing import Any, Dict, List, Optional, Tuple
+
 import httpx
-from typing import Tuple, List, Optional, Dict, Any
 
 
 class Netlify:
@@ -25,7 +26,7 @@ class Netlify:
             response = httpx.get(f"{self.base_url}/dns_zones", headers=self.headers)
             response.raise_for_status()
             return response.json()
-        except httpx.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             print(f"Error fetching DNS zones: {str(e)}")
             return []
 
@@ -71,7 +72,7 @@ class Netlify:
                         }
                     )
             return sites_with_domains
-        except httpx.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             print(f"Error fetching sites: {str(e)}")
             return []
 
@@ -91,7 +92,7 @@ class Netlify:
                 f"https://{full_domain}", timeout=5, allow_redirects=True
             )
             return False, f"Subdomain '{full_domain}' is already in use."
-        except httpx.exceptions.RequestException:
+        except httpx.RequestError:
             try:
                 # Double check with HTTP in case HTTPS is not configured
                 response = httpx.head(
@@ -101,7 +102,7 @@ class Netlify:
                     False,
                     f"Subdomain '{full_domain}' is already in use (HTTP only).",
                 )
-            except httpx.exceptions.RequestException:
+            except httpx.RequestError:
                 return True, f"Subdomain '{full_domain}' appears to be available!"
 
     def create_dns_record(
@@ -143,9 +144,39 @@ class Netlify:
             )
             response.raise_for_status()
             return response.json()
-        except httpx.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             print(f"Error creating DNS record: {str(e)}")
             return {}
+
+    def get_record_id_by_subdomain(self, zone_id: str, subdomain: str) -> Optional[str]:
+        """
+        Get the DNS record ID for a specific subdomain
+        Args:
+            zone_id (str): The DNS zone ID
+            subdomain (str): The subdomain name to look up (without the domain)
+        Returns:
+            Optional[str]: The record ID if found, None otherwise
+        """
+        try:
+            # Get all DNS records for the zone
+            response = httpx.get(
+                f"{self.base_url}/dns_zones/{zone_id}/dns_records", headers=self.headers
+            )
+            response.raise_for_status()
+            records = response.json()
+
+            # Look for the record matching the subdomain
+            for record in records:
+                # The hostname in the record might be either just the subdomain
+                # or the full domain name (subdomain.domain.com)
+                hostname = record.get("hostname", "")
+                if hostname == subdomain or hostname.startswith(f"{subdomain}."):
+                    return record.get("id")
+
+            return None
+        except httpx.RequestError as e:
+            print(f"Error getting record ID for subdomain {subdomain}: {str(e)}")
+            return None
 
     def update_dns_record(
         self,
@@ -188,7 +219,7 @@ class Netlify:
             )
             response.raise_for_status()
             return response.json()
-        except httpx.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             print(f"Error updating DNS record: {str(e)}")
             return {}
 
@@ -208,29 +239,6 @@ class Netlify:
             )
             response.raise_for_status()
             return True
-        except httpx.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             print(f"Error removing DNS record: {str(e)}")
             return False
-
-
-# netlify = Netlify(access_token=NETLIFY_ACCESS_KEY)
-
-
-# # Get specific zone ID
-# zone_id = netlify.get_zone_id_by_domain("fosscu.org")
-# print("Zone ID for fosscu.org:", zone_id)
-
-# if zone_id:
-#     try:
-#         # Create CNAME record with more detailed error handling
-#         record = netlify.create_dns_record(
-#             zone_id=zone_id,
-#             record_type="CNAME",
-#             hostname="yadav",
-#             value="https://codecshivam.netlify.app"
-#         )
-#         print("API Response for record creation:", record)
-#     except Exception as e:
-#         print(f"Error creating DNS record: {str(e)}")
-# else:
-#     print("No zone ID found for fosscu.org")

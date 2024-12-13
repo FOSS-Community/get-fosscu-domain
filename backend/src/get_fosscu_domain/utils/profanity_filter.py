@@ -357,6 +357,3 @@ def is_profanity_found(text: str) -> bool:
     # Check for any bad word in the normalized text
     words = set(normalized_words)
     return not words.isdisjoint(BAD_WORD_LIST)
-
-
-print(is_profanity_found("porn.fosscu.org"))

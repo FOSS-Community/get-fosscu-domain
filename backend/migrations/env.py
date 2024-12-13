@@ -17,6 +17,8 @@ sys.path.append(src_dir)
 from get_fosscu_domain.postgres import Base
 # Import all your models here
 from get_fosscu_domain.models.user import User
+from get_fosscu_domain.models.subdomain import Subdomain
+
 from get_fosscu_domain.config import get_settings
 
 # this is the Alembic Config object
