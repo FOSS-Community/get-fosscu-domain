@@ -1,12 +1,17 @@
 import logging
 from logging.config import dictConfig
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from get_fosscu_domain.api import router
 from get_fosscu_domain.logging import LogConfig
 from get_fosscu_domain.postgres import Base, engine
+from get_fosscu_domain.rate_limiting import (
+    limiter,
+    RateLimitExceeded,
+    rate_limit_exceeded_handler,
+)
 
 dictConfig(LogConfig())
 logger = logging.getLogger("get_fosscu_domain")
@@ -42,3 +47,7 @@ def create_app() -> FastAPI:
 
 logger.info("Starting get_fosscu_domain API server")
 app = create_app()
+
+app.state.limiter = limiter
+
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)

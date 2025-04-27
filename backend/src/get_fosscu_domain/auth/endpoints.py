@@ -1,5 +1,5 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
 from get_fosscu_domain.auth.auth import create_access_token, get_current_user
@@ -7,6 +7,7 @@ from get_fosscu_domain.auth.schema import GithubLoginResponse, UserResponse
 from get_fosscu_domain.config import get_settings
 from get_fosscu_domain.models.user import User
 from get_fosscu_domain.postgres import get_db
+from get_fosscu_domain.rate_limiting import limiter
 from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["auth"])
@@ -24,7 +25,8 @@ FRONTEND_URL = "http://localhost:5173"
     status_code=status.HTTP_200_OK,
     description="Initiates GitHub OAuth flow",
 )
-async def github_login() -> GithubLoginResponse:
+@limiter.limit("50/minute")
+async def github_login(request: Request) -> GithubLoginResponse:
     """
     Returns the GitHub OAuth authorization URL.
     """
@@ -42,7 +44,8 @@ async def github_login() -> GithubLoginResponse:
     },
     description="Handles GitHub OAuth callback and redirects to frontend",
 )
-async def github_callback(code: str, db: Session = Depends(get_db)):
+@limiter.limit("50/minute")
+async def github_callback(request: Request, code: str, db: Session = Depends(get_db)):
     """
     Handles GitHub OAuth callback:
     1. Exchanges code for access token
@@ -134,7 +137,8 @@ async def github_callback(code: str, db: Session = Depends(get_db)):
     responses={401: {"description": "Not authenticated"}},
     description="Get current user profile",
 )
-async def read_users_me(current_user: User = Depends(get_current_user)) -> UserResponse:
+@limiter.limit("50/minute")
+async def read_users_me(request: Request, current_user: User = Depends(get_current_user)) -> UserResponse:
     """
     Returns the profile of the currently authenticated user.
     """
