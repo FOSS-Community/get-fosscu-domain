@@ -4,14 +4,12 @@ from logging.config import dictConfig
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
 from .api import router
 from .logging import LogConfig
 from .postgres import Base, engine
-from .rate_limiting import (
-    limiter,
-    RateLimitExceeded,
-    rate_limit_exceeded_handler,
-)
+from .rate_limiting import (RateLimitExceeded, limiter,
+                            rate_limit_exceeded_handler)
 
 dictConfig(LogConfig())
 logger = logging.getLogger("get_fosscu_domain")

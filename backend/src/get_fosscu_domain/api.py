@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from .auth.endpoints import router as auth_router
 from .health.endpoints import router as health_router
 from .subdomain.endpoints import router as subdomain_router

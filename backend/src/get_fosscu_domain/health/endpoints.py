@@ -1,11 +1,13 @@
 import time
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from ..rate_limiting import limiter
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
 from ..health.schema import HealthErrorResponse, HealthResponse
 from ..postgres import get_db
-from sqlalchemy import text
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from ..rate_limiting import limiter
 
 router = APIRouter(tags=["health"])
 

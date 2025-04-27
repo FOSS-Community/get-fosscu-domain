@@ -1,14 +1,15 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
 from ..auth.auth import create_access_token, get_current_user
 from ..auth.schema import GithubLoginResponse, UserResponse
 from ..config import get_settings
 from ..models.user import User
 from ..postgres import get_db
 from ..rate_limiting import limiter
-from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["auth"])
 
@@ -139,7 +140,9 @@ async def github_callback(request: Request, code: str, db: Session = Depends(get
     description="Get current user profile",
 )
 @limiter.limit("50/minute")
-async def read_users_me(request: Request, current_user: User = Depends(get_current_user)) -> UserResponse:
+async def read_users_me(
+    request: Request, current_user: User = Depends(get_current_user)
+) -> UserResponse:
     """
     Returns the profile of the currently authenticated user.
     """

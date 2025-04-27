@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from ..postgres import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+
+from ..postgres import Base
 
 
 class Subdomain(Base):

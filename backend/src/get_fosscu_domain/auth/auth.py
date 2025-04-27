@@ -4,11 +4,12 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
 from ..config import get_settings
 from ..models.user import User
 from ..postgres import get_db
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
 
 # Configuration
 SECRET_KEY = get_settings().SECRET_KEY

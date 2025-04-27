@@ -2,6 +2,9 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
+
 from ..auth.auth import get_current_user
 from ..config import get_settings
 from ..models.subdomain import Subdomain
@@ -10,8 +13,6 @@ from ..postgres import get_db
 from ..subdomain.schema import SubdomainCreate, SubdomainResponse
 from ..utils.netlify import Netlify
 from ..utils.profanity_filter import is_profanity_found
-from sqlalchemy import func
-from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["subdomains"])
 
