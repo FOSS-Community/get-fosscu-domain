@@ -20,4 +20,4 @@ WORKDIR /app
 RUN uv sync --frozen
 
 # Presuming there is a `my_app` command provided by the project
-CMD ["uv", "run", "fastapi", "run", "src/get_fosscu_domain/app.py"]
+CMD ["uv", "run", "uvicorn", "src.get_fosscu_domain.app:app", "--host", "0.0.0.0", "--port", "8080"]
