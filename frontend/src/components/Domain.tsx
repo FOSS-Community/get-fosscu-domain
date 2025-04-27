@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import { useAuth } from '@/context/AuthContext';
+import { useSubdomainCreate } from '@/hooks/useSubdomainCreate';
+import { useGetSubdomains } from '@/hooks/useGetSubdomains';
+import { useDeleteSubdomain } from "../hooks/useDeleteSubdomain";
 
 interface DNSRecord {
     name: string;
@@ -594,9 +598,7 @@ function Experiments({ domain }: ExperimentProps) {
             <hr className="my-4" />
             <div className="useful border-blue-200 pl-4 border-l-4">
                 <p>
-                    <span className="font-bold">Useful experiments:</span> The rest of the
-                    experiments are things that you actually might want to do in real
-                    life. These are more like a challenge than a tutorial: each one has a brief outline.
+                    <span className="font-bold">Useful experiments:</span> These experiments are things that you actually might want to do in real life.
                 </p>
                 <details className="experiment">
                     <summary>
@@ -615,86 +617,88 @@ function Experiments({ domain }: ExperimentProps) {
                         <p>DNS records are deleted after a week, so don't use this site for anything real! :)</p>
                     </div>
                 </details>
-
-                <details className="experiment">
-                    <summary>
-                        <h3>2. Receive an email</h3>
-                    </summary>
-                    <div className="details-modal">
-                        <p>
-                            You can use any email service that lets you use your own domain for this experiment. Here's an example of some steps using Fastmail (though these instructions haven't been tested in a long time and may not work!):
-                        </p>
-                        <ol>
-                            <li>On Fastmail: Sign up for a free trial using the email <code>you@mail.{domain}.fosscu.org</code></li>
-                            <li>On Mess With DNS: Create 2 MX records pointing mail.{domain}.fosscu.org at Fastmail's mail servers. Fastmail will give you instructions when you sign up.</li>
-                            <li>Send yourself an email at you@mail.{domain}.fosscu.org and see if you get it!</li>
-                        </ol>
-                        <p>DNS records are deleted after a week, so don't use this email address for anything real! :)</p>
-                    </div>
-                </details>
-
-                <details className="experiment">
-                    <summary>
-                        <h3>3. Make your email's SPF and DKIM records pass</h3>
-                    </summary>
-                    <div className="details-modal">
-                        <p>
-                            The goal is to create SPF and DKIM records so that receivers recognize your mail as coming from your domain.
-                        </p>
-                        <ol>
-                            <li>First you need to set up an email account, as described in experiment 2.</li>
-                            <li>Test your SPF records using the instructions on this <a href="https://www.appmaildev.com/en/spf">SPF Test</a> page</li>
-                            <li>On Fastmail: Follow Fastmail's instructions to set up SPF and DKIM</li>
-                            <li>Test your SPF records again and make sure that they're working. The <a href="https://www.appmaildev.com/en/spf">SPF Test</a> page explains how to confirm that they're working.</li>
-                        </ol>
-                    </div>
-                </details>
             </div>
         </div>
     )
-}   
+}
 
 const Domain = () => {
     const [domain] = useState('example346');
-    const [records, setRecords] = useState<DNSRecord[]>([
-        {
-            name: 'example346.fosscu.org.',
-            type: 'SOA',
-            content: 'fosscu1.fosscu.org. fake.example.com. 2024121101 1080 3600 0 3600 604800 3600',
-            ttl: 3600
-        }
-    ]);
+    const { subdomains, isLoading: isLoadingSubdomains, error: subdomainsError, refreshSubdomains } = useGetSubdomains();
     const [newRecord, setNewRecord] = useState<DNSRecord>({
         name: '',
         type: 'A',
         content: '',
         ttl: 3600
     });
+    const { user, logout } = useAuth();
+    const { createSubdomain, isLoading: isCreating, error: createError } = useSubdomainCreate();
+    const { deleteSubdomain } = useDeleteSubdomain();
+    
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setRecords([...records, newRecord]);
-        setNewRecord({
-            name: '',
-            type: 'A',
-            content: '',
-            ttl: 3600
-        });
+
+        const subdomain = newRecord.name.replace(`.${domain}.fosscu.org`, '');
+
+        const data = {
+            subdomain: subdomain,
+            target_domain: newRecord.content,
+            record_type: newRecord.type,
+            ttl: newRecord.ttl,
+        };
+
+        const result = await createSubdomain(data);
+
+        if (result) {
+            refreshSubdomains();
+            setNewRecord({
+                name: '',
+                type: 'A',
+                content: '',
+                ttl: 3600
+            });
+        }
     };
 
-    const handleDelete = (index: number) => {
-        const newRecords = records.filter((_, i) => i !== index);
-        setRecords(newRecords);
+    const handleDelete = async (id: number) => {
+        const result = await deleteSubdomain(id);
+        if (result?.success) {
+            refreshSubdomains();
+        }
     };
 
     return (
         <div className="mx-auto py-8 lg:gap-0 gap-8 grid grid-cols-1 lg:grid-cols-9">
-            <div className="w-full  col-span-6 lg:pl-16 pr-8">
+            <div className="w-full col-span-6 lg:pl-16 pr-8">
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-xl">
-                        Your subdomain is: <span className="text-emerald-600 font-bold">{domain}.fosscu.org</span>
-                    </h2>
-                    <button className="text-gray-600 hover:text-gray-800 underline">Logout</button>
+                    <div className="flex items-center gap-4">
+                        {user && (
+                            <img
+                                src={user.avatar_url}
+                                alt={user.username}
+                                className="w-10 h-10 rounded-full"
+                            />
+                        )}
+                        <div>
+                            <h2 className="text-xl">
+                                Your subdomain is: <span className="text-emerald-600 font-bold">{domain}.fosscu.org</span>
+                            </h2>
+                            {user && (
+                                <p className="text-sm text-gray-600">
+                                    Logged in as {user.username} ({user.email})
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                    {user && (
+                        <button
+                            className="text-gray-600 hover:text-gray-800 underline"
+                            onClick={logout}
+                        >
+                            Logout
+                        </button>
+                    )}
                 </div>
 
                 <section className="mb-8">
@@ -713,6 +717,7 @@ const Domain = () => {
                                 value={newRecord.name}
                                 onChange={e => setNewRecord({ ...newRecord, name: e.target.value })}
                                 className="w-full p-2 border rounded"
+                                disabled={isCreating}
                             />
                         </div>
                         <div>
@@ -721,21 +726,24 @@ const Domain = () => {
                                 value={newRecord.type}
                                 onChange={e => setNewRecord({ ...newRecord, type: e.target.value })}
                                 className="w-full p-2 border rounded"
+                                disabled={isCreating}
                             >
                                 <option value="A">A</option>
                                 <option value="AAAA">AAAA</option>
                                 <option value="CNAME">CNAME</option>
-                                <option value="MX">MX</option>
                                 <option value="TXT">TXT</option>
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">IPv4 Address</label>
+                            <label className="block text-sm font-medium mb-1">
+                                {newRecord.type === 'CNAME' ? 'Target Domain' : 'IPv4 Address'}
+                            </label>
                             <input
                                 type="text"
                                 value={newRecord.content}
                                 onChange={e => setNewRecord({ ...newRecord, content: e.target.value })}
                                 className="w-full p-2 border rounded"
+                                disabled={isCreating}
                             />
                         </div>
                         <div>
@@ -743,16 +751,29 @@ const Domain = () => {
                             <input
                                 type="number"
                                 value={newRecord.ttl}
-                                onChange={e => setNewRecord({ ...newRecord, ttl: parseInt(e.target.value) })}
+                                onChange={e => {
+                                    const value = e.target.value === '' ? 3600 : parseInt(e.target.value);
+                                    setNewRecord({ ...newRecord, ttl: isNaN(value) ? 3600 : value });
+                                }}
                                 className="w-full p-2 border rounded"
+                                disabled={isCreating}
+                                min="1"
                             />
                         </div>
+                        {createError && (
+                            <div className="col-span-4 text-red-500 text-sm">
+                                {createError.detail.map((err, i) => (
+                                    <div key={i}>{err.msg}</div>
+                                ))}
+                            </div>
+                        )}
                         <div className="col-span-4 text-right">
                             <button
                                 type="submit"
-                                className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600"
+                                className="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600 disabled:bg-emerald-300"
+                                disabled={isCreating}
                             >
-                                Create
+                                {isCreating ? 'Creating...' : 'Create'}
                             </button>
                         </div>
                     </form>
@@ -765,12 +786,12 @@ const Domain = () => {
                             <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                         </svg>
                         All DNS records
-                        {records.length > 0 && (
+                        {subdomains.length > 0 && (
                             <button
-                                onClick={() => setRecords([])}
+                                onClick={() => refreshSubdomains()}
                                 className="text-sm text-gray-500 hover:text-gray-700"
                             >
-                                (clear)
+                                (refresh)
                             </button>
                         )}
                     </h3>
@@ -783,26 +804,46 @@ const Domain = () => {
                                     <th className="text-left p-3">Type</th>
                                     <th className="text-left p-3">Content</th>
                                     <th className="text-left p-3">TTL</th>
+                                    <th className="text-left p-3">Created At</th>
                                     <th className="text-left p-3"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {records.map((record, index) => (
-                                    <tr key={index} className="border-b">
-                                        <td className="p-3">{record.name}</td>
-                                        <td className="p-3">{record.type}</td>
-                                        <td className="p-3 font-mono text-sm">{record.content}</td>
-                                        <td className="p-3">{record.ttl}</td>
-                                        <td className="p-3">
-                                            <button
-                                                onClick={() => handleDelete(index)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                Delete
-                                            </button>
+                                {isLoadingSubdomains ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center p-4">Loading...</td>
+                                    </tr>
+                                ) : subdomainsError ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center p-4 text-red-500">
+                                            Error loading subdomains
                                         </td>
                                     </tr>
-                                ))}
+                                ) : subdomains.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="text-center p-4">
+                                            No records found
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    subdomains.map((record) => (
+                                        <tr key={record.id} className="border-b">
+                                            <td className="p-3">{record.subdomain}.fosscu.org</td>
+                                            <td className="p-3">{record.record_type}</td>
+                                            <td className="p-3 font-mono text-sm">{record.target_domain}</td>
+                                            <td className="p-3">{record.ttl}</td>
+                                            <td className="p-3">{new Date(record.created_at).toLocaleString()}</td>
+                                            <td className="p-3">
+                                                <button
+                                                    onClick={() => handleDelete(record.id)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
