@@ -16,7 +16,7 @@ router = APIRouter(tags=["auth"])
 # GitHub OAuth Configuration
 GITHUB_CLIENT_ID = get_settings().GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET = get_settings().GITHUB_CLIENT_SECRET
-GITHUB_REDIRECT_URI = "http://localhost:8080/api/v1/auth/github/callback"
+GITHUB_REDIRECT_URI = "http://localhost:8000/api/v1/auth/github/callback"
 FRONTEND_URL = "http://localhost:5173"
 
 
