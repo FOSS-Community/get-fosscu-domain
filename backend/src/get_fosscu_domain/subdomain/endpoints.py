@@ -2,14 +2,14 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from get_fosscu_domain.auth.auth import get_current_user
-from get_fosscu_domain.config import get_settings
-from get_fosscu_domain.models.subdomain import Subdomain
-from get_fosscu_domain.models.user import User
-from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.subdomain.schema import SubdomainCreate, SubdomainResponse
-from get_fosscu_domain.utils.netlify import Netlify
-from get_fosscu_domain.utils.profanity_filter import is_profanity_found
+from ..auth.auth import get_current_user
+from ..config import get_settings
+from ..models.subdomain import Subdomain
+from ..models.user import User
+from ..postgres import get_db
+from ..subdomain.schema import SubdomainCreate, SubdomainResponse
+from ..utils.netlify import Netlify
+from ..utils.profanity_filter import is_profanity_found
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -287,13 +287,13 @@ async def delete_subdomain(
 ):
     """Delete a specific subdomain"""
 
-    subdomain = (
+    subdomain_instance = (
         db.query(Subdomain)
         .filter(Subdomain.id == subdomain_id, Subdomain.user_id == current_user.id)
         .first()
     )
 
-    if not subdomain:
+    if not subdomain_instance:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Subdomain not found"
         )
@@ -303,13 +303,13 @@ async def delete_subdomain(
     zone_id = netlify.get_zone_id_by_domain(base_domain)
     if zone_id:
         record_id = netlify.get_record_id_by_subdomain(
-            zone_id, f"{subdomain.subdomain}.{base_domain}"
+            zone_id, f"{subdomain_instance.subdomain}.{base_domain}"
         )
         if record_id:
             netlify.remove_dns_record(zone_id, record_id)
 
     # Delete from database
-    db.delete(subdomain)
+    db.delete(subdomain_instance)
     db.commit()
 
     return None

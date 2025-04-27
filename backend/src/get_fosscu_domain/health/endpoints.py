@@ -1,8 +1,8 @@
 import time
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from get_fosscu_domain.rate_limiting import limiter
-from get_fosscu_domain.health.schema import HealthErrorResponse, HealthResponse
-from get_fosscu_domain.postgres import get_db
+from ..rate_limiting import limiter
+from ..health.schema import HealthErrorResponse, HealthResponse
+from ..postgres import get_db
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError

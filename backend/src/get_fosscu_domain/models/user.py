@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from get_fosscu_domain.postgres import Base
+from ..postgres import Base
 from sqlalchemy import Column, DateTime, Integer, String, Text
 
 

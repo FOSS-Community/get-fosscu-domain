@@ -1,4 +1,4 @@
-from get_fosscu_domain.config import get_settings
+from .config import get_settings
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker

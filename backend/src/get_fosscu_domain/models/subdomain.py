@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from get_fosscu_domain.postgres import Base
+from ..postgres import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 
 

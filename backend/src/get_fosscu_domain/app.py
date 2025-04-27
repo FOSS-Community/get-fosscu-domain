@@ -4,10 +4,10 @@ from logging.config import dictConfig
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from get_fosscu_domain.api import router
-from get_fosscu_domain.logging import LogConfig
-from get_fosscu_domain.postgres import Base, engine
-from get_fosscu_domain.rate_limiting import (
+from .api import router
+from .logging import LogConfig
+from .postgres import Base, engine
+from .rate_limiting import (
     limiter,
     RateLimitExceeded,
     rate_limit_exceeded_handler,
@@ -32,6 +32,7 @@ def configure_cors(app: FastAPI) -> None:
 
 def create_app() -> FastAPI:
     app = FastAPI(title="get_fosscu_domain")
+    # app = FastAPI(title="get_fosscu_domain", docs_url=None, redoc_url="/docs")
     configure_cors(app=app)
 
     app.include_router(router=router)

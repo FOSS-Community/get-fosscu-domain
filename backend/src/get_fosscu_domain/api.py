@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from get_fosscu_domain.auth.endpoints import router as auth_router
-from get_fosscu_domain.health.endpoints import router as health_router
-from get_fosscu_domain.subdomain.endpoints import router as subdomain_router
+from .auth.endpoints import router as auth_router
+from .health.endpoints import router as health_router
+from .subdomain.endpoints import router as subdomain_router
 
 # from get_fosscu_domain.health import router as health_router
 router = APIRouter(prefix="/api/v1")

@@ -13,6 +13,7 @@ class Config(BaseSettings):
     GITHUB_CLIENT_SECRET: str
     NETLIFY_DOMAIN_ZONE_ID: str
     NETLIFY_DOMAIN: str
+    BASE_DOMAIN: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

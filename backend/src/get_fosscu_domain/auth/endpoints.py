@@ -2,12 +2,12 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordBearer
-from get_fosscu_domain.auth.auth import create_access_token, get_current_user
-from get_fosscu_domain.auth.schema import GithubLoginResponse, UserResponse
-from get_fosscu_domain.config import get_settings
-from get_fosscu_domain.models.user import User
-from get_fosscu_domain.postgres import get_db
-from get_fosscu_domain.rate_limiting import limiter
+from ..auth.auth import create_access_token, get_current_user
+from ..auth.schema import GithubLoginResponse, UserResponse
+from ..config import get_settings
+from ..models.user import User
+from ..postgres import get_db
+from ..rate_limiting import limiter
 from sqlalchemy.orm import Session
 
 router = APIRouter(tags=["auth"])
@@ -15,7 +15,7 @@ router = APIRouter(tags=["auth"])
 # GitHub OAuth Configuration
 GITHUB_CLIENT_ID = get_settings().GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET = get_settings().GITHUB_CLIENT_SECRET
-GITHUB_REDIRECT_URI = "http://localhost:8000/api/v1/auth/github/callback"
+GITHUB_REDIRECT_URI = "http://localhost:8080/api/v1/auth/github/callback"
 FRONTEND_URL = "http://localhost:5173"
 
 
@@ -122,6 +122,7 @@ async def github_callback(request: Request, code: str, db: Session = Depends(get
             # Redirect to frontend with token
             redirect_url = f"{FRONTEND_URL}/callback?token={jwt_token}"
             return RedirectResponse(url=redirect_url)
+            # return jwt_token
 
     except httpx.RequestError as e:
         raise HTTPException(

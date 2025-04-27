@@ -4,9 +4,9 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from get_fosscu_domain.config import get_settings
-from get_fosscu_domain.models.user import User
-from get_fosscu_domain.postgres import get_db
+from ..config import get_settings
+from ..models.user import User
+from ..postgres import get_db
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
