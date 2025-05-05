@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext';
 import { useSubdomainCreate } from '@/hooks/useSubdomainCreate';
 import { useGetSubdomains } from '@/hooks/useGetSubdomains';
@@ -9,6 +9,14 @@ interface DNSRecord {
     type: string;
     content: string;
     ttl: number;
+}
+
+interface DNSRequest {
+    id: string;
+    time: Date;
+    request: string;
+    response: string;
+    status: 'pending' | 'success' | 'error';
 }
 
 interface ExperimentProps {
@@ -624,17 +632,36 @@ function Experiments({ domain }: ExperimentProps) {
 
 const Domain = () => {
     const [domain] = useState('example346');
-    const { subdomains, isLoading: isLoadingSubdomains, error: subdomainsError, refreshSubdomains } = useGetSubdomains();
+    const { subdomains, isLoading: isLoadingSubdomains, error: subdomainsError, refreshSubdomains, removeSubdomain } = useGetSubdomains();
     const [newRecord, setNewRecord] = useState<DNSRecord>({
         name: '',
         type: 'A',
         content: '',
         ttl: 3600
     });
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [requests, setRequests] = useState<DNSRequest[]>([]);
     const { user, logout } = useAuth();
     const { createSubdomain, isLoading: isCreating, error: createError } = useSubdomainCreate();
     const { deleteSubdomain } = useDeleteSubdomain();
-    
+
+    // Fetch subdomains when component mounts or when user changes
+    useEffect(() => {
+        if (user) {
+            refreshSubdomains();
+        }
+    }, [user, refreshSubdomains]);
+
+    const addRequest = (request: string, response: string, status: DNSRequest['status']) => {
+        const newRequest: DNSRequest = {
+            id: Math.random().toString(36).substr(2, 9),
+            time: new Date(),
+            request,
+            response,
+            status
+        };
+        setRequests(prev => [newRequest, ...prev]);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -648,23 +675,85 @@ const Domain = () => {
             ttl: newRecord.ttl,
         };
 
-        const result = await createSubdomain(data);
+        // Add pending request
+        addRequest(
+            `Creating ${newRecord.type} record for ${subdomain}.${domain}.fosscu.org`,
+            'Pending...',
+            'pending'
+        );
 
-        if (result) {
-            refreshSubdomains();
-            setNewRecord({
-                name: '',
-                type: 'A',
-                content: '',
-                ttl: 3600
-            });
+        try {
+            const result = await createSubdomain(data);
+
+            if (result) {
+                await refreshSubdomains();
+                setNewRecord({
+                    name: '',
+                    type: 'A',
+                    content: '',
+                    ttl: 3600
+                });
+                // Update request status to success
+                setRequests(prev => prev.map(req => 
+                    req.status === 'pending' 
+                        ? { ...req, response: 'Record created successfully', status: 'success' }
+                        : req
+                ));
+            }
+        } catch (error) {
+            console.error('Error creating subdomain:', error);
+            // Update request status to error
+            setRequests(prev => prev.map(req => 
+                req.status === 'pending' 
+                    ? { ...req, response: 'Failed to create record', status: 'error' }
+                    : req
+            ));
         }
     };
 
     const handleDelete = async (id: number) => {
-        const result = await deleteSubdomain(id);
-        if (result?.success) {
+        setDeletingId(id);
+        const recordToDelete = subdomains.find(s => s.id === id);
+        
+        if (recordToDelete) {
+            // Add pending request
+            addRequest(
+                `Deleting ${recordToDelete.record_type} record for ${recordToDelete.subdomain}.${domain}.fosscu.org`,
+                'Pending...',
+                'pending'
+            );
+        }
+
+        try {
+            const result = await deleteSubdomain(id);
+            if (result?.success) {
+                removeSubdomain(id);
+                // Update request status to success
+                setRequests(prev => prev.map(req => 
+                    req.status === 'pending' 
+                        ? { ...req, response: 'Record deleted successfully', status: 'success' }
+                        : req
+                ));
+            } else {
+                // Update request status to error
+                setRequests(prev => prev.map(req => 
+                    req.status === 'pending' 
+                        ? { ...req, response: 'Failed to delete record', status: 'error' }
+                        : req
+                ));
+                refreshSubdomains();
+            }
+        } catch (error) {
+            console.error('Error deleting subdomain:', error);
+            // Update request status to error
+            setRequests(prev => prev.map(req => 
+                req.status === 'pending' 
+                    ? { ...req, response: 'Error deleting record', status: 'error' }
+                    : req
+            ));
             refreshSubdomains();
+        } finally {
+            setDeletingId(null);
         }
     };
 
@@ -827,7 +916,7 @@ const Domain = () => {
                                     </tr>
                                 ) : (
                                     subdomains.map((record) => (
-                                        <tr key={record.id} className="border-b">
+                                        <tr key={record.id} className={`border-b ${deletingId === record.id ? 'opacity-50' : ''}`}>
                                             <td className="p-3">{record.subdomain}.fosscu.org</td>
                                             <td className="p-3">{record.record_type}</td>
                                             <td className="p-3 font-mono text-sm">{record.target_domain}</td>
@@ -836,9 +925,10 @@ const Domain = () => {
                                             <td className="p-3">
                                                 <button
                                                     onClick={() => handleDelete(record.id)}
-                                                    className="text-red-500 hover:text-red-700"
+                                                    className={`text-red-500 hover:text-red-700 ${deletingId === record.id ? 'cursor-not-allowed' : ''}`}
+                                                    disabled={deletingId === record.id}
                                                 >
-                                                    Delete
+                                                    {deletingId === record.id ? 'Deleting...' : 'Delete'}
                                                 </button>
                                             </td>
                                         </tr>
@@ -856,19 +946,49 @@ const Domain = () => {
                         </svg>
                         Requests
                     </h3>
-                    <p className="text-gray-600 mb-4">This is a list of all requests for your subdomain's records.</p>
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-gray-50 border-y">
-                                <th className="text-left p-3">Time</th>
-                                <th className="text-left p-3">Request</th>
-                                <th className="text-left p-3">Response</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {/* Request rows will go here */}
-                        </tbody>
-                    </table>
+                    <p className="text-gray-600 mb-4">Recent DNS record operations</p>
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-50 border-y">
+                                    <th className="text-left p-3">Time</th>
+                                    <th className="text-left p-3">Request</th>
+                                    <th className="text-left p-3">Response</th>
+                                    <th className="text-left p-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {requests.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center p-4 text-gray-500">
+                                            No requests yet
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    requests.map((request) => (
+                                        <tr key={request.id} className="border-b">
+                                            <td className="p-3">
+                                                {request.time.toLocaleTimeString()}
+                                            </td>
+                                            <td className="p-3">{request.request}</td>
+                                            <td className="p-3">{request.response}</td>
+                                            <td className="p-3">
+                                                <span className={`px-2 py-1 rounded text-sm ${
+                                                    request.status === 'success' 
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : request.status === 'error'
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {request.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
             </div>
             <Experiments domain={domain} />
