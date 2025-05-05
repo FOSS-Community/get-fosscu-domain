@@ -5,6 +5,7 @@ const baseUrl = import.meta.env.VITE_BASE_URL;
 interface DeleteSubdomainResponse {
   success: boolean;
   message?: string;
+  deletedId?: number;
 }
 
 type DeleteSubdomainError = {
@@ -35,6 +36,15 @@ export const useDeleteSubdomain = () => {
         },
       });
       
+      // Handle 204 No Content response
+      if (response.status === 204) {
+        return {
+          success: true,
+          deletedId: id
+        };
+      }
+
+      // For other responses, try to parse JSON
       const data = await response.json();
       console.log(data);
       if (!response.ok) {
@@ -47,6 +57,7 @@ export const useDeleteSubdomain = () => {
       return {
         success: true,
         message: data.message,
+        deletedId: id
       };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to delete subdomain";
@@ -57,7 +68,7 @@ export const useDeleteSubdomain = () => {
       setError(error);
       return {
         success: false,
-        message: errorMessage,
+        message: errorMessage
       };
     } finally {
       setIsLoading(false);
